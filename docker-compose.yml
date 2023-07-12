@@ -1,0 +1,13 @@
+services:
+  tracker-worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - '9091:9091'
+    volumes:
+      - type: bind
+        source: ./downloads
+        target: /var/www/html/downloads
+    env_file:
+      - .env

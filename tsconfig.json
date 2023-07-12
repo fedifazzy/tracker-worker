@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es2018",
+    "moduleResolution": "node",
+    "sourceMap": false,
+    "typeRoots": ["../node_modules/@types"],
+    "types": ["node"],
+    "noUnusedLocals": true,
+    "resolveJsonModule": true,
+    "lib": ["es2015"],
+    "outDir": "./dist"
+  },
+  "files": ["src/index.ts", "src/done.ts"],
+  "exclude": ["node_modules"]
+}
