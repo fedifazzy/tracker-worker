@@ -37,7 +37,9 @@ export class TransmissionService {
     rows.splice(-1)
     return rows.map((row) => {
       const [id, fileInfoRow] = row.split(':')
-      const filename = fileInfoRow.split('/').at(-1)
+      const fileInfoParts = fileInfoRow.split(' ')
+      const unit = fileInfoParts.at(10)
+      const filename = fileInfoRow.split(unit + '  ').at(1)
       return {
         id: Number(id),
         filename,
