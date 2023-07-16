@@ -37,7 +37,14 @@ export class TransmissionService {
     rows.splice(-1)
     return rows.map((row) => {
       const [id, fileInfoRow] = row.split(':')
-      const filename = fileInfoRow.split('/').at(-1)
+      const fileInfoParts = fileInfoRow.split(' ')
+      // const percentage = fileInfoParts.at(3).slice(0,-1)
+      // const priority = fileInfoParts.at(4)
+      // const state = fileInfoParts.at(7)
+      // const size = fileInfoParts.at(9)
+      const unit = fileInfoParts.at(10)
+      const filename = fileInfoRow.split(unit + '  ').at(1)
+      // const extension = fileInfoRow.slice(-3)
       return {
         id: Number(id),
         filename,
