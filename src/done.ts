@@ -23,7 +23,7 @@ const main = async () => {
   axios.post(`${appConfig.TRACKER_API_URL}/downloaded`, {
     hash,
     torrentName: `${torrentName}`,
-    username: appConfig.TG_USERNAME,
+    workerId: appConfig.WORKER_ID,
   })
 }
 
