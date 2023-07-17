@@ -1,15 +1,18 @@
 import axios from 'axios'
-import {appConfig} from '../config'
+import {appConfig, initWorker} from '../config'
 import {Task, TaskCompletePayload, TaskType} from '../models'
 import {taskProcessor} from './task-processor'
 
 export class TasksFetcher {
   private readonly httpClient = axios.create({baseURL: appConfig.TRACKER_API_URL})
   private readonly username = appConfig.TG_USERNAME
+  private workerId: string
 
   async register() {
+    this.workerId = await initWorker()
     const response = await this.httpClient.post('/register', {
       username: this.username,
+      id: this.workerId,
     })
 
     const {interval} = response.data
@@ -18,7 +21,9 @@ export class TasksFetcher {
       return
     }
 
-    console.log(`Worker registered for ${this.username}.\nStart downloads via bot https://t.me/feditracker_bot`)
+    console.log(
+      `Worker \x1b[33m${this.workerId}\x1b[0m registered for ${this.username}.\nStart downloads via bot https://t.me/feditracker_bot`
+    )
 
     this.startFetch(interval)
   }
@@ -34,6 +39,7 @@ export class TasksFetcher {
       const response = await this.httpClient.get<Task[]>('/get-tasks', {
         params: {
           username: this.username,
+          workerId: this.workerId,
         },
       })
 

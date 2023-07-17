@@ -1,5 +1,6 @@
 import path from 'path'
 import fs from 'fs'
+import {random} from './services/random'
 
 type Config = {
   [K in (typeof AppConfig.fields)[number]]: string
@@ -13,6 +14,7 @@ class AppConfig {
     'S3_ACCESS_KEY',
     'S3_SECRET',
     'S3_REGION',
+    'WORKER_ID',
   ] as const
 
   private readonly requiredFiedls: Partial<typeof AppConfig.fields> = ['TRACKER_API_URL', 'TG_USERNAME']
@@ -22,8 +24,17 @@ class AppConfig {
 
   constructor() {
     this.init()
+    this.initWorkerName()
     this.validate()
     this.shareForTransmissionDoneScript()
+  }
+
+  async initWorkerName() {
+    if (!this.container.WORKER_ID) {
+      this.container.WORKER_ID = await random.generateName()
+      this.shareForTransmissionDoneScript()
+    }
+    return this.container.WORKER_ID
   }
 
   private init(): void {
@@ -61,4 +72,11 @@ class AppConfig {
     return this.container
   }
 }
-export const appConfig = new AppConfig().value
+
+const configInstance = new AppConfig()
+
+export const initWorker = async () => {
+  return await configInstance.initWorkerName()
+}
+
+export const appConfig = configInstance.value
