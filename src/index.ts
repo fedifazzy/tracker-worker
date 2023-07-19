@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 process.on('uncaughtException', (err) => {
   console.error(err?.message || err)
 })
@@ -7,4 +8,4 @@ process.on('unhandledRejection', (rejection: any) => {
 })
 
 import {tasksFetcher} from './services/tasks-fetcher'
-tasksFetcher.register()
+tasksFetcher.start()
