@@ -24,16 +24,14 @@ class AppConfig {
 
   constructor() {
     this.init()
-    this.initWorkerName()
     this.validate()
-    this.shareForTransmissionDoneScript()
   }
 
   async initWorkerName() {
     if (!this.container.WORKER_ID) {
       this.container.WORKER_ID = await random.generateName()
-      this.shareForTransmissionDoneScript()
     }
+    this.shareForTransmissionDoneScript()
     return this.container.WORKER_ID
   }
 
