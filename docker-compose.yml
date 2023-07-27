@@ -5,6 +5,8 @@ services:
       dockerfile: docker/Dockerfile
     ports:
       - '9091:9091'
+      - '139:139'
+      - '445:445'
     volumes:
       - type: bind
         source: ./downloads
