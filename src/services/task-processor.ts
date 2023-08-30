@@ -22,8 +22,6 @@ export class TaskProcessor {
   async addTorrent({magnetLink}: AddTorrentTaskPayload): Promise<AddTorrentResult> {
     const hash = await transmission.start(magnetLink)
     const filesList = await transmission.filesList(hash)
-    await transmission.stop(hash)
-    await transmission.deselectAll(hash)
 
     return {
       hash,

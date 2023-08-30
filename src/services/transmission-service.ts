@@ -66,7 +66,7 @@ export class TransmissionService {
   }
 
   private readonly maxAttempts = 30
-  private readonly attemptStepMS = 1000
+  private readonly attemptStepMS = 3000
   private currentAttempt = 1
   private async retrieveFiles(hash: string) {
     return new Promise<TransmissionFileInfo[]>((resolve) => {
@@ -88,6 +88,8 @@ export class TransmissionService {
       }
       this.currentAttempt++
     }
+
+    return []
   }
 
   async selectFile(hash: string, fileId: number | string) {
