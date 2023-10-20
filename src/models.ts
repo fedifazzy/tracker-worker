@@ -45,7 +45,8 @@ export type AddTorrentResult = {
   hash: string
   filesList: TransmissionFileInfo[]
 }
-export type TaskCompletePayload = AddTorrentResult | void
+
+export type TaskCompletePayload = AddTorrentResult | StatusInfo[] | void
 
 type AddTorrentCompleteMessage = {
   id: number

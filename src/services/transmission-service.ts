@@ -62,7 +62,7 @@ export class TransmissionService {
     }).filter(item => item.estimatedTime !== 'Done')
   }
 
-  async getStatus(): Promise<any> {
+  async getStatus(): Promise<StatusInfo[]> {
     const stdout = await this.exec('-l')
     return this.parseStatusInfoList(stdout)
   }
