@@ -1,5 +1,5 @@
 import {exec} from 'child_process'
-import {TransmissionFileInfo} from '../models'
+import {StatusInfo, TransmissionFileInfo} from '../models'
 
 export class TransmissionService {
   private readonly url = 'http://localhost:9091/torrent'
@@ -45,6 +45,26 @@ export class TransmissionService {
         filename,
       }
     })
+  }
+  private parseStatusInfoList(stdout: string): StatusInfo[] {
+    const rows = stdout.split('\n')
+    rows.splice(0, 1)
+    rows.splice(-2)
+
+    return rows.map(torrentInfoRow => {
+      const torrentInfoParts = torrentInfoRow.split('  ').filter(Boolean)
+      const name = torrentInfoParts.at(8).trim()
+      const status = torrentInfoParts.at(7).trim()
+      const estimatedTime = torrentInfoParts.at(3).trim()
+      const progress = torrentInfoParts.at(1).trim()
+      const downloadedSize = torrentInfoParts.at(2).trim()
+      return {name, status, progress, estimatedTime,  downloadedSize}
+    }).filter(item => item.estimatedTime !== 'Done')
+  }
+
+  async getStatus(): Promise<any> {
+    const stdout = await this.exec('-l')
+    return this.parseStatusInfoList(stdout)
   }
 
   async start(magnetLink: string): Promise<string> {

@@ -15,6 +15,7 @@ export type SelectFileTaskPayload = {
 export const enum TaskType {
   ADD_TORRENT,
   SELECT_FILE,
+  GET_STATUS,
 }
 
 type TaskBase = {
@@ -32,9 +33,13 @@ type SelectFileTask = TaskBase & {
   payload: SelectFileTaskPayload
 }
 
+type GetStatusTask = TaskBase & {
+  type: TaskType.GET_STATUS
+}
+
 export type TaskPayload = AddTorrentTaskPayload | SelectFileTaskPayload
 
-export type Task = AddTorrentTask | SelectFileTask
+export type Task = AddTorrentTask | SelectFileTask | GetStatusTask
 
 export type AddTorrentResult = {
   hash: string
@@ -54,4 +59,18 @@ type SelectFileCompleteMessage = {
   payload: void
 }
 
-export type TaskCompleteMessage = AddTorrentCompleteMessage | SelectFileCompleteMessage
+type GetStatusCompleteMessage = {
+  id: number
+  type: TaskType.GET_STATUS
+  payload: StatusInfo
+}
+
+export type StatusInfo = {
+  name: string
+  status: string
+  estimatedTime: string
+  progress: string
+  downloadedSize: string
+}
+
+export type TaskCompleteMessage = AddTorrentCompleteMessage | SelectFileCompleteMessage | GetStatusCompleteMessage
