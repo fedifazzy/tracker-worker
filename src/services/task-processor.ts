@@ -16,6 +16,8 @@ export class TaskProcessor {
         return this.addTorrent(task.payload)
       case TaskType.SELECT_FILE:
         return this.selectFiles(task.payload)
+      case TaskType.GET_STATUS:
+        return this.getStatus()
     }
   }
 
@@ -32,6 +34,10 @@ export class TaskProcessor {
   async selectFiles({hash, fileId}: SelectFileTaskPayload) {
     await transmission.selectFile(hash, fileId)
     await transmission.resume(hash)
+  }
+
+  async getStatus() {
+    return await transmission.getStatus()
   }
 }
 
