@@ -1,8 +1,23 @@
-import axios from 'axios'
 class Random {
+  private readonly nicknames = [
+    'Captain',
+    'Maverick',
+    'Goose',
+    'Iceman',
+    'Viper',
+    'Jester',
+    'Cougar',
+    'Wolfman',
+    'Slider',
+    'Merlin',
+    'Sundown',
+    'Hollywood',
+    'Stinger',
+    'Chipper',
+  ]
+
   async generateName() {
-    const {data} = await axios.get<{RandL: {items: string[]}}>('https://www.randomlists.com/data/nicknames.json')
-    return this.pick(data.RandL.items)
+    return this.pick(this.nicknames)
   }
 
   pick<T>(list: Array<T>): T {
