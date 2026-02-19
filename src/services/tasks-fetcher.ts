@@ -1,11 +1,11 @@
 import axios from 'axios'
-import {appConfig, initWorker} from '../config'
-import {Task, TaskCompletePayload, TaskType} from '../models'
-import {taskProcessor} from './task-processor'
+import { appConfig, initWorker } from '../config'
+import { Task, TaskCompletePayload, TaskType } from '../models'
+import { taskProcessor } from './task-processor'
 
 export class TasksFetcher {
   private readonly fetchInterval = 5000
-  private readonly httpClient = axios.create({baseURL: appConfig.TRACKER_API_URL})
+  private readonly httpClient = axios.create({ baseURL: appConfig.TRACKER_API_URL })
   private readonly username = appConfig.TG_USERNAME
   private workerId: string
 
@@ -44,7 +44,7 @@ export class TasksFetcher {
   }
 
   private async taskDone(id: number, type: TaskType, payload: TaskCompletePayload) {
-    console.log('Task complete:', JSON.stringify({id, type, payload}))
+    console.log('Task complete:', JSON.stringify({ id, type, payload }))
     this.httpClient.post('/task-done', {
       id,
       type,
