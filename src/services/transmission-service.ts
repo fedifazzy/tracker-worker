@@ -1,5 +1,5 @@
-import {exec} from 'child_process'
-import {StatusInfo, TransmissionFileInfo} from '../models'
+import { exec } from 'child_process'
+import { StatusInfo, TransmissionFileInfo } from '../models'
 
 export class TransmissionService {
   private readonly url = 'http://localhost:9091/torrent'
@@ -18,7 +18,8 @@ export class TransmissionService {
     return new Promise((resolve, reject) => {
       exec(`transmission-remote ${this.url} -n 'fedifazzy:transmission' ${params}`, (error, stdout, stderr) => {
         if (error) {
-          console.error(error)
+          console.error('transmission-remote error:', error.message)
+          if (stderr) console.error('stderr:', stderr)
           reject(error)
           return
         }
@@ -33,19 +34,46 @@ export class TransmissionService {
 
   private parseFileList(stdout: string): TransmissionFileInfo[] {
     const rows = stdout.split('\n')
+    // Skip the first 2 header lines and the last empty line
     rows.splice(0, 2)
     rows.splice(-1)
-    return rows.map((row) => {
-      const [id, fileInfoRow] = row.split(':')
-      const fileInfoParts = fileInfoRow.split(' ')
-      const unit = fileInfoParts.at(10)
-      const filename = fileInfoRow.split(unit + '  ').at(1)
-      return {
-        id: Number(id),
-        filename,
-      }
-    })
+
+    return rows
+      .filter((row) => row.trim().length > 0)
+      .map((row) => {
+        // Format: "  0: 100% Normal   Yes   6.72 MB  Filename.ext"
+        // The id is before the first colon
+        const colonIndex = row.indexOf(':')
+        if (colonIndex === -1) return null
+
+        const id = Number(row.substring(0, colonIndex).trim())
+        const rest = row.substring(colonIndex + 1).trim()
+
+        // Parse: "100% Normal   Yes   6.72 MB  Filename.ext"
+        // Use regex to match: percentage, priority, get, size+unit, then filename
+        const match = rest.match(
+          /^\s*(\d+%|n\/a)\s+(Low|Normal|High)\s+(Yes|No)\s+[\d.]+\s+\S+\s{2,}(.+)$/
+        )
+
+        if (match) {
+          return {
+            id,
+            filename: match[4].trim(),
+          }
+        }
+
+        // Fallback: try to get filename after double-space near the end
+        const parts = rest.split(/\s{2,}/)
+        const filename = parts.length > 0 ? parts[parts.length - 1].trim() : rest.trim()
+
+        return {
+          id,
+          filename,
+        }
+      })
+      .filter((item): item is TransmissionFileInfo => item !== null)
   }
+
   private parseStatusInfoList(stdout: string): StatusInfo[] {
     const rows = stdout.split('\n')
     rows.splice(0, 1)
@@ -53,12 +81,12 @@ export class TransmissionService {
 
     return rows.map(torrentInfoRow => {
       const torrentInfoParts = torrentInfoRow.split('  ').filter(Boolean)
-      const name = torrentInfoParts.at(8).trim()
-      const status = torrentInfoParts.at(7).trim()
-      const estimatedTime = torrentInfoParts.at(3).trim()
-      const progress = torrentInfoParts.at(1).trim()
-      const downloadedSize = torrentInfoParts.at(2).trim()
-      return {name, status, progress, estimatedTime,  downloadedSize}
+      const name = torrentInfoParts.at(8)?.trim() || ''
+      const status = torrentInfoParts.at(7)?.trim() || ''
+      const estimatedTime = torrentInfoParts.at(3)?.trim() || ''
+      const progress = torrentInfoParts.at(1)?.trim() || ''
+      const downloadedSize = torrentInfoParts.at(2)?.trim() || ''
+      return { name, status, progress, estimatedTime, downloadedSize }
     }).filter(item => item.estimatedTime !== 'Done')
   }
 
@@ -87,26 +115,31 @@ export class TransmissionService {
 
   private readonly maxAttempts = 30
   private readonly attemptStepMS = 3000
-  private currentAttempt = 1
-  private async retrieveFiles(hash: string) {
+
+  private async retrieveFiles(hash: string, attempt: number) {
     return new Promise<TransmissionFileInfo[]>((resolve) => {
-      const waitTime = this.currentAttempt * this.attemptStepMS
+      const waitTime = attempt * this.attemptStepMS
       setTimeout(async () => {
-        const stdout = await this.exec(`-t ${hash} -f`)
-        const filesList = this.parseFileList(stdout)
-        resolve(filesList)
+        try {
+          const stdout = await this.exec(`-t ${hash} -f`)
+          const filesList = this.parseFileList(stdout)
+          resolve(filesList)
+        } catch (error) {
+          console.error(`retrieveFiles attempt ${attempt} failed:`, error?.message || error)
+          resolve([])
+        }
       }, waitTime)
     })
   }
 
   async filesList(hash: string): Promise<TransmissionFileInfo[]> {
-    while (this.currentAttempt <= this.maxAttempts) {
-      const filesList = await this.retrieveFiles(hash)
+    let currentAttempt = 1
+    while (currentAttempt <= this.maxAttempts) {
+      const filesList = await this.retrieveFiles(hash, currentAttempt)
       if (filesList.length > 0) {
-        this.currentAttempt = 0
         return filesList
       }
-      this.currentAttempt++
+      currentAttempt++
     }
 
     return []
