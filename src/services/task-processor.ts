@@ -1,10 +1,12 @@
 import {
   AddTorrentTaskPayload,
   AddTorrentResult,
+  DeleteFilesTaskPayload,
   SelectFileTaskPayload,
   Task,
   TaskCompletePayload,
   TaskType,
+  TorrentListItem,
 } from '../models'
 import {transmission} from './transmission-service'
 
@@ -18,6 +20,10 @@ export class TaskProcessor {
         return this.selectFiles(task.payload)
       case TaskType.GET_STATUS:
         return this.getStatus()
+      case TaskType.DELETE_FILES:
+        return this.deleteFiles(task.payload)
+      case TaskType.LIST_TORRENTS:
+        return this.listTorrents()
     }
   }
 
@@ -38,6 +44,14 @@ export class TaskProcessor {
 
   async getStatus() {
     return await transmission.getStatus()
+  }
+
+  async deleteFiles({hash}: DeleteFilesTaskPayload) {
+    await transmission.removeAndDelete(hash)
+  }
+
+  async listTorrents(): Promise<TorrentListItem[]> {
+    return await transmission.listAll()
   }
 }
 

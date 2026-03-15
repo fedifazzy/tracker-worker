@@ -12,10 +12,21 @@ export type SelectFileTaskPayload = {
   fileId: number | string
 }
 
+export type DeleteFilesTaskPayload = {
+  hash: string
+}
+
+export type TorrentListItem = {
+  name: string
+  hash: string
+}
+
 export const enum TaskType {
   ADD_TORRENT,
   SELECT_FILE,
   GET_STATUS,
+  DELETE_FILES,
+  LIST_TORRENTS,
 }
 
 type TaskBase = {
@@ -37,16 +48,25 @@ type GetStatusTask = TaskBase & {
   type: TaskType.GET_STATUS
 }
 
-export type TaskPayload = AddTorrentTaskPayload | SelectFileTaskPayload
+type DeleteFilesTask = TaskBase & {
+  type: TaskType.DELETE_FILES
+  payload: DeleteFilesTaskPayload
+}
 
-export type Task = AddTorrentTask | SelectFileTask | GetStatusTask
+type ListTorrentsTask = TaskBase & {
+  type: TaskType.LIST_TORRENTS
+}
+
+export type TaskPayload = AddTorrentTaskPayload | SelectFileTaskPayload | DeleteFilesTaskPayload
+
+export type Task = AddTorrentTask | SelectFileTask | GetStatusTask | DeleteFilesTask | ListTorrentsTask
 
 export type AddTorrentResult = {
   hash: string
   filesList: TransmissionFileInfo[]
 }
 
-export type TaskCompletePayload = AddTorrentResult | StatusInfo[] | void
+export type TaskCompletePayload = AddTorrentResult | StatusInfo[] | TorrentListItem[] | void
 
 type AddTorrentCompleteMessage = {
   id: number
@@ -66,6 +86,18 @@ type GetStatusCompleteMessage = {
   payload: StatusInfo
 }
 
+type DeleteFilesCompleteMessage = {
+  id: number
+  type: TaskType.DELETE_FILES
+  payload: void
+}
+
+type ListTorrentsCompleteMessage = {
+  id: number
+  type: TaskType.LIST_TORRENTS
+  payload: TorrentListItem[]
+}
+
 export type StatusInfo = {
   name: string
   status: string
@@ -74,4 +106,9 @@ export type StatusInfo = {
   downloadedSize: string
 }
 
-export type TaskCompleteMessage = AddTorrentCompleteMessage | SelectFileCompleteMessage | GetStatusCompleteMessage
+export type TaskCompleteMessage =
+  | AddTorrentCompleteMessage
+  | SelectFileCompleteMessage
+  | GetStatusCompleteMessage
+  | DeleteFilesCompleteMessage
+  | ListTorrentsCompleteMessage

@@ -1,5 +1,5 @@
 import {exec} from 'child_process'
-import {StatusInfo, TransmissionFileInfo} from '../models'
+import {StatusInfo, TorrentListItem, TransmissionFileInfo} from '../models'
 
 export class TransmissionService {
   private readonly url = 'http://localhost:9091/torrent'
@@ -114,6 +114,33 @@ export class TransmissionService {
 
   async selectFile(hash: string, fileId: number | string) {
     await this.exec(`-t ${hash} -g${fileId}`)
+  }
+
+  async removeAndDelete(hash: string): Promise<void> {
+    await this.exec(`-t "${hash}" -rad`)
+  }
+
+  async listAll(): Promise<TorrentListItem[]> {
+    const stdout = await this.exec('-t all -i')
+    const result: TorrentListItem[] = []
+    let currentName: string | null = null
+    let currentHash: string | null = null
+
+    for (const line of stdout.split('\n')) {
+      const nameMatch = line.match(/^\s*Name:\s*(.+)/)
+      const hashMatch = line.match(/^\s*Hash:\s*([a-f0-9]+)/i)
+
+      if (nameMatch) currentName = nameMatch[1].trim()
+      if (hashMatch) currentHash = hashMatch[1].trim()
+
+      if (currentName && currentHash) {
+        result.push({name: currentName, hash: currentHash})
+        currentName = null
+        currentHash = null
+      }
+    }
+
+    return result
   }
 }
 

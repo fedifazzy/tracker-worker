@@ -3,7 +3,7 @@ import {s3Service} from './services/s3-service'
 import {createReadStream, rmSync, mkdir} from 'fs'
 import {Readable} from 'stream'
 
-const downloadsDir = '/var/www/html/downloads/'
+const downloadsDir = '/var/www/html/wd/'
 
 export const removeFiles = (path: string) => {
   const fullPath = `${downloadsDir}${path}`
