@@ -117,3 +117,11 @@ export type TaskCompleteMessage =
   | GetStatusCompleteMessage
   | DeleteFilesCompleteMessage
   | ListTorrentsCompleteMessage
+
+export type TorrentProgress = {
+  hash: string
+  name: string
+  percentDone: number
+  rateDownload: number
+  eta: number
+}

@@ -1,162 +1,150 @@
-import {exec} from 'child_process'
 import {StatusInfo, TorrentListItem, TransmissionFileInfo} from '../models'
+import {transmissionRpc} from './transmission-rpc'
+
+const TRANSMISSION_STATUS_DOWNLOADING = 4
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+}
+
+function formatEta(seconds: number): string {
+  if (seconds < 0) return 'Unknown'
+  if (seconds < 60) return `${seconds} sec`
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} min`
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  return m > 0 ? `${h} hr ${m} min` : `${h} hr`
+}
+
+function statusNumberToString(status: number): string {
+  switch (status) {
+    case 0: return 'Stopped'
+    case 1: return 'Queued to verify'
+    case 2: return 'Verifying'
+    case 3: return 'Queued to download'
+    case 4: return 'Downloading'
+    case 5: return 'Queued to seed'
+    case 6: return 'Seeding'
+    default: return 'Unknown'
+  }
+}
 
 export class TransmissionService {
-  private readonly url = 'http://localhost:9091/torrent'
-  onDone(_hash: string): void {
-    // @todo
-    // Potential memory leak if not call:
-    // deleteHash(hash)
-    // But keeping hash allows to downdload new files after torrent is 'done'
-  }
+  private readonly uiUrl = 'http://localhost:9091/torrent'
 
   constructor() {
-    console.log(`Transmission UI: ${this.url}/web/`)
-  }
-
-  private async exec(params: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      exec(`transmission-remote ${this.url} -n 'fedifazzy:transmission' ${params}`, (error, stdout, stderr) => {
-        if (error) {
-          console.error(error)
-          reject(error)
-          return
-        }
-        resolve(stdout)
-      })
-    })
-  }
-
-  private getTorrentHash = (link: string): string => {
-    return link.match(/btih:(.*)&/)![1].toLowerCase()
-  }
-
-  private parseFileList(stdout: string): TransmissionFileInfo[] {
-    const rows = stdout.split('\n')
-    rows.splice(0, 2)
-    rows.splice(-1)
-    return rows.map((row) => {
-      const [id, fileInfoRow] = row.split(':')
-      const fileInfoParts = fileInfoRow.split(' ')
-      const unit = fileInfoParts.at(10)
-      const filename = fileInfoRow.split(unit + '  ').at(1)
-      return {
-        id: Number(id),
-        filename,
-      }
-    })
-  }
-  private parseStatusInfoList(stdout: string): StatusInfo[] {
-    const rows = stdout.split('\n')
-    rows.splice(0, 1)
-    rows.splice(-2)
-
-    return rows.map(torrentInfoRow => {
-      const torrentInfoParts = torrentInfoRow.split('  ').filter(Boolean)
-      const name = torrentInfoParts.at(8).trim()
-      const status = torrentInfoParts.at(7).trim()
-      const estimatedTime = torrentInfoParts.at(3).trim()
-      const progress = torrentInfoParts.at(1).trim()
-      const downloadedSize = torrentInfoParts.at(2).trim()
-      return {name, status, progress, estimatedTime,  downloadedSize}
-    }).filter(item => item.estimatedTime !== 'Done')
-  }
-
-  async getStatus(): Promise<StatusInfo[]> {
-    const stdout = await this.exec('-l')
-    return this.parseStatusInfoList(stdout)
+    console.log(`Transmission UI: ${this.uiUrl}/web/`)
   }
 
   async start(magnetLink: string): Promise<string> {
-    const hash = this.getTorrentHash(magnetLink)
-    await this.exec(`-a "${magnetLink}" -s`)
-    return hash
+    const res = await transmissionRpc.request('torrent-add', {filename: magnetLink})
+    const added = res.arguments?.['torrent-added'] ?? res.arguments?.['torrent-duplicate']
+    if (!added?.hashString) {
+      throw new Error('Failed to add torrent: no hashString in response')
+    }
+    return added.hashString.toLowerCase()
   }
 
   async resume(hash: string): Promise<void> {
-    await this.exec(`-t "${hash}" -s`)
+    await transmissionRpc.request('torrent-start', {ids: [hash]})
   }
 
   async stop(hash: string): Promise<void> {
-    await this.exec(`-t "${hash}" -S`)
+    await transmissionRpc.request('torrent-stop', {ids: [hash]})
   }
 
   async deselectAll(hash: string): Promise<void> {
-    await this.exec(`-t ${hash} -Gall`)
+    await transmissionRpc.request('torrent-set', {ids: [hash], 'files-unwanted': []})
+  }
+
+  async selectFile(hash: string, fileId: number | string) {
+    const id = typeof fileId === 'string' ? Number(fileId) : fileId
+    await transmissionRpc.request('torrent-set', {ids: [hash], 'files-wanted': [id]})
+  }
+
+  async removeAndDelete(hash: string): Promise<void> {
+    await transmissionRpc.request('torrent-remove', {ids: [hash], 'delete-local-data': true})
   }
 
   private readonly maxAttempts = 30
   private readonly attemptStepMS = 3000
-  private currentAttempt = 1
-  private async retrieveFiles(hash: string) {
-    return new Promise<TransmissionFileInfo[]>((resolve) => {
-      const waitTime = this.currentAttempt * this.attemptStepMS
-      setTimeout(async () => {
-        const stdout = await this.exec(`-t ${hash} -f`)
-        const filesList = this.parseFileList(stdout)
-        resolve(filesList)
-      }, waitTime)
-    })
-  }
 
   async filesList(hash: string): Promise<TransmissionFileInfo[]> {
-    while (this.currentAttempt <= this.maxAttempts) {
-      const filesList = await this.retrieveFiles(hash)
-      if (filesList.length > 0) {
-        this.currentAttempt = 0
-        return filesList
-      }
-      this.currentAttempt++
-    }
+    for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
+      await new Promise((r) => setTimeout(r, attempt * this.attemptStepMS))
+      const res = await transmissionRpc.request('torrent-get', {
+        ids: [hash],
+        fields: ['files'],
+      })
+      const torrent = res.arguments?.torrents?.[0]
+      if (!torrent?.files?.length) continue
 
+      return torrent.files.map((f: any, idx: number) => ({
+        id: idx,
+        filename: f.name,
+      }))
+    }
     return []
   }
 
-  async selectFile(hash: string, fileId: number | string) {
-    await this.exec(`-t ${hash} -g${fileId}`)
-  }
+  async getStatus(): Promise<StatusInfo[]> {
+    const res = await transmissionRpc.request('torrent-get', {
+      fields: ['name', 'status', 'percentDone', 'eta', 'rateDownload', 'sizeWhenDone', 'haveValid'],
+    })
+    const torrents: any[] = res.arguments?.torrents ?? []
 
-  async removeAndDelete(hash: string): Promise<void> {
-    await this.exec(`-t "${hash}" -rad`)
+    return torrents
+      .filter((t) => t.status === TRANSMISSION_STATUS_DOWNLOADING)
+      .map((t) => ({
+        name: t.name,
+        status: statusNumberToString(t.status),
+        progress: `${Math.round(t.percentDone * 100)}%`,
+        estimatedTime: formatEta(t.eta),
+        downloadedSize: formatBytes(t.haveValid),
+      }))
   }
 
   async listAll(): Promise<TorrentListItem[]> {
-    const stdout = await this.exec('-t all -i')
-    const result: TorrentListItem[] = []
-    let current: Partial<TorrentListItem> = {}
+    const res = await transmissionRpc.request('torrent-get', {
+      fields: ['name', 'hashString', 'totalSize', 'status', 'percentDone', 'eta', 'haveValid'],
+    })
+    const torrents: any[] = res.arguments?.torrents ?? []
 
-    for (const line of stdout.split('\n')) {
-      const nameMatch = line.match(/^\s*Name:\s*(.+)/)
-      const hashMatch = line.match(/^\s*Hash:\s*([a-f0-9]+)/i)
-      const sizeMatch = line.match(/^\s*Total size:\s*([\d.]+\s*\w+)/)
-      const stateMatch = line.match(/^\s*State:\s*(.+)/)
-      const percentMatch = line.match(/^\s*Percent Done:\s*([\d.]+%?)/)
-      const etaMatch = line.match(/^\s*ETA:\s*(.+?)(\s*\(|$)/)
-      const haveMatch = line.match(/^\s*Have:\s*([\d.]+\s*\w+)/)
+    return torrents.map((t) => ({
+      name: t.name,
+      hash: t.hashString,
+      totalSize: formatBytes(t.totalSize),
+      status: statusNumberToString(t.status),
+      progress: `${Math.round(t.percentDone * 100)}%`,
+      downloadedSize: formatBytes(t.haveValid),
+      estimatedTime: t.eta >= 0 ? formatEta(t.eta) : null,
+    }))
+  }
 
-      if (nameMatch) current.name = nameMatch[1].trim()
-      if (hashMatch) current.hash = hashMatch[1].trim()
-      if (sizeMatch) current.totalSize = sizeMatch[1].trim()
-      if (stateMatch) current.status = stateMatch[1].trim()
-      if (percentMatch) current.progress = percentMatch[1].trim()
-      if (etaMatch) current.estimatedTime = etaMatch[1].trim()
-      if (haveMatch) current.downloadedSize = haveMatch[1].trim()
+  async getDownloadingTorrents(): Promise<Array<{
+    hash: string
+    name: string
+    percentDone: number
+    rateDownload: number
+    eta: number
+  }>> {
+    const res = await transmissionRpc.request('torrent-get', {
+      fields: ['name', 'hashString', 'percentDone', 'rateDownload', 'eta', 'status'],
+    })
+    const torrents: any[] = res.arguments?.torrents ?? []
 
-      if (current.name && current.hash) {
-        result.push({
-          name: current.name,
-          hash: current.hash,
-          totalSize: current.totalSize ?? 'N/A',
-          status: current.status ?? null,
-          progress: current.progress ?? null,
-          downloadedSize: current.downloadedSize ?? null,
-          estimatedTime: current.estimatedTime ?? null,
-        })
-        current = {}
-      }
-    }
-
-    return result
+    return torrents
+      .filter((t) => t.status === TRANSMISSION_STATUS_DOWNLOADING)
+      .map((t) => ({
+        hash: t.hashString,
+        name: t.name,
+        percentDone: t.percentDone,
+        rateDownload: t.rateDownload,
+        eta: t.eta,
+      }))
   }
 }
 

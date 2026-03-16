@@ -2,6 +2,7 @@ import axios from 'axios'
 import {appConfig, initWorker} from '../config'
 import {Task, TaskCompletePayload, TaskType} from '../models'
 import {taskProcessor} from './task-processor'
+import {progressReporter} from './progress-reporter'
 
 export class TasksFetcher {
   private readonly fetchInterval = 5000
@@ -18,6 +19,7 @@ export class TasksFetcher {
 
     this.reportStarted()
     this.startFetch()
+    progressReporter.start(this.workerId)
   }
 
   private async reportStarted() {
