@@ -7,6 +7,7 @@ services:
       - type: bind
         source: /mnt/wd/feditracker-storage
         target: /var/www/html/wd
+      - transmission-state:/var/lib/transmission-daemon
     env_file:
       - .env
     restart: unless-stopped
@@ -19,3 +20,6 @@ services:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_POLL_INTERVAL=300
     restart: unless-stopped
+
+volumes:
+  transmission-state:
