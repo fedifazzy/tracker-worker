@@ -7,6 +7,9 @@ RUN npm ci && npm run build
 
 FROM node:18-slim
 
+ARG BUILD_SHA
+ENV BUILD_SHA=$BUILD_SHA
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \

@@ -16,7 +16,23 @@ export class TasksFetcher {
       `Worker \x1b[33m${this.workerId}\x1b[0m registered for ${this.username}.\nStart downloads via bot https://t.me/feditracker_bot`
     )
 
+    this.reportStarted()
     this.startFetch()
+  }
+
+  private async reportStarted() {
+    const version = process.env.BUILD_SHA
+    if (!version) return
+
+    try {
+      await this.httpClient.post('/started', {
+        workerId: this.workerId,
+        ownerUsername: this.username,
+        version,
+      })
+    } catch (error) {
+      console.log("Can't report worker started", error?.message)
+    }
   }
 
   private startFetch() {
