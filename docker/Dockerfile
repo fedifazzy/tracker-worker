@@ -9,9 +9,14 @@ FROM node:18-slim
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+        curl \
+        ca-certificates \
         transmission-cli \
         transmission-common \
-        transmission-daemon && \
+        transmission-daemon \
+        samba && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/*
 

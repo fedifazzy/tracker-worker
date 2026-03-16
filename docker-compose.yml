@@ -1,8 +1,6 @@
 services:
   tracker-worker:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+    image: ghcr.io/fedifazzy/tracker-worker:latest
     ports:
       - '9091:9091'
     volumes:
@@ -11,3 +9,13 @@ services:
         target: /var/www/html/wd
     env_file:
       - .env
+    restart: unless-stopped
+
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=300
+    restart: unless-stopped
