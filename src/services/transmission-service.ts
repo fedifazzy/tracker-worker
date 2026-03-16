@@ -123,24 +123,36 @@ export class TransmissionService {
   async listAll(): Promise<TorrentListItem[]> {
     const stdout = await this.exec('-t all -i')
     const result: TorrentListItem[] = []
-    let currentName: string | null = null
-    let currentHash: string | null = null
-    let currentSize: string | null = null
+    let current: Partial<TorrentListItem> = {}
 
     for (const line of stdout.split('\n')) {
       const nameMatch = line.match(/^\s*Name:\s*(.+)/)
       const hashMatch = line.match(/^\s*Hash:\s*([a-f0-9]+)/i)
       const sizeMatch = line.match(/^\s*Total size:\s*([\d.]+\s*\w+)/)
+      const stateMatch = line.match(/^\s*State:\s*(.+)/)
+      const percentMatch = line.match(/^\s*Percent Done:\s*([\d.]+%?)/)
+      const etaMatch = line.match(/^\s*ETA:\s*(.+?)(\s*\(|$)/)
+      const haveMatch = line.match(/^\s*Have:\s*([\d.]+\s*\w+)/)
 
-      if (nameMatch) currentName = nameMatch[1].trim()
-      if (hashMatch) currentHash = hashMatch[1].trim()
-      if (sizeMatch) currentSize = sizeMatch[1].trim()
+      if (nameMatch) current.name = nameMatch[1].trim()
+      if (hashMatch) current.hash = hashMatch[1].trim()
+      if (sizeMatch) current.totalSize = sizeMatch[1].trim()
+      if (stateMatch) current.status = stateMatch[1].trim()
+      if (percentMatch) current.progress = percentMatch[1].trim()
+      if (etaMatch) current.estimatedTime = etaMatch[1].trim()
+      if (haveMatch) current.downloadedSize = haveMatch[1].trim()
 
-      if (currentName && currentHash) {
-        result.push({name: currentName, hash: currentHash, totalSize: currentSize ?? 'N/A'})
-        currentName = null
-        currentHash = null
-        currentSize = null
+      if (current.name && current.hash) {
+        result.push({
+          name: current.name,
+          hash: current.hash,
+          totalSize: current.totalSize ?? 'N/A',
+          status: current.status ?? null,
+          progress: current.progress ?? null,
+          downloadedSize: current.downloadedSize ?? null,
+          estimatedTime: current.estimatedTime ?? null,
+        })
+        current = {}
       }
     }
 
