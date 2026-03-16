@@ -19,6 +19,7 @@ export type DeleteFilesTaskPayload = {
 export type TorrentListItem = {
   name: string
   hash: string
+  totalSize: string
 }
 
 export const enum TaskType {

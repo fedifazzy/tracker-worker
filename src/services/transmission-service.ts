@@ -125,18 +125,22 @@ export class TransmissionService {
     const result: TorrentListItem[] = []
     let currentName: string | null = null
     let currentHash: string | null = null
+    let currentSize: string | null = null
 
     for (const line of stdout.split('\n')) {
       const nameMatch = line.match(/^\s*Name:\s*(.+)/)
       const hashMatch = line.match(/^\s*Hash:\s*([a-f0-9]+)/i)
+      const sizeMatch = line.match(/^\s*Total size:\s*([\d.]+\s*\w+)/)
 
       if (nameMatch) currentName = nameMatch[1].trim()
       if (hashMatch) currentHash = hashMatch[1].trim()
+      if (sizeMatch) currentSize = sizeMatch[1].trim()
 
       if (currentName && currentHash) {
-        result.push({name: currentName, hash: currentHash})
+        result.push({name: currentName, hash: currentHash, totalSize: currentSize ?? 'N/A'})
         currentName = null
         currentHash = null
+        currentSize = null
       }
     }
 
