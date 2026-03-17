@@ -8,7 +8,9 @@ RUN npm ci && npm run build
 FROM node:18-slim
 
 ARG BUILD_SHA
+ARG BUILD_CHANGELOG
 ENV BUILD_SHA=$BUILD_SHA
+ENV BUILD_CHANGELOG=$BUILD_CHANGELOG
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \

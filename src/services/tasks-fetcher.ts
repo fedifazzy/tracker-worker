@@ -31,6 +31,7 @@ export class TasksFetcher {
         workerId: this.workerId,
         ownerUsername: this.username,
         version,
+        changelog: process.env.BUILD_CHANGELOG || '',
       })
     } catch (error) {
       console.log("Can't report worker started", error?.message)

@@ -41,6 +41,19 @@ jobs:
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Get changelog
+        id: changelog
+        run: |
+          BEFORE=${{ github.event.before }}
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            CHANGELOG=$(git log --format="- %s" -5)
+          else
+            CHANGELOG=$(git log --format="- %s" $BEFORE..${{ github.sha }})
+          fi
+          echo "text<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -50,6 +63,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: BUILD_SHA=${{ github.sha }}
+          build-args: |
+            BUILD_SHA=${{ github.sha }}
+            BUILD_CHANGELOG=${{ steps.changelog.outputs.text }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
