@@ -48,7 +48,7 @@ jobs:
           if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
             CHANGELOG=$(git log --format="- %s" -5)
           else
-            CHANGELOG=$(git log --format="- %s" $BEFORE..${{ github.sha }})
+            CHANGELOG=$(git log --format="- %s" $BEFORE..${{ github.sha }} 2>/dev/null) || CHANGELOG=$(git log --format="- %s" -5)
           fi
           echo "text<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
