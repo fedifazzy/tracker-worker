@@ -1,10 +1,10 @@
-import axios from 'axios'
 import {appConfig} from '../config'
+import {createHttpClient} from '../http'
 import {transmission} from './transmission-service'
 
 export class ProgressReporter {
   private readonly reportInterval = 15000
-  private readonly httpClient = axios.create({baseURL: appConfig.TRACKER_API_URL})
+  private readonly httpClient = createHttpClient(appConfig.TRACKER_API_URL)
   private intervalId: ReturnType<typeof setInterval> | null = null
 
   start(workerId: string) {

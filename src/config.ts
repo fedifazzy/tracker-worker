@@ -17,7 +17,7 @@ class AppConfig {
     'WORKER_ID',
   ] as const
 
-  private readonly requiredFiedls: Partial<typeof AppConfig.fields> = ['TRACKER_API_URL', 'TG_USERNAME']
+  private readonly requiredFields: Partial<typeof AppConfig.fields> = ['TRACKER_API_URL', 'TG_USERNAME']
   private readonly envPath = path.resolve(__dirname, '../.env')
 
   private container: Config
@@ -59,9 +59,9 @@ class AppConfig {
   }
 
   private validate(): void {
-    for (const field of this.requiredFiedls) {
+    for (const field of this.requiredFields) {
       if (!this.container[field]) {
-        throw new Error(`Не задан ${field}`)
+        throw new Error(`Missing required env variable: ${field}`)
       }
     }
   }

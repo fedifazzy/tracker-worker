@@ -1,12 +1,12 @@
-import axios from 'axios'
 import {appConfig, initWorker} from '../config'
+import {createHttpClient} from '../http'
 import {Task, TaskCompletePayload, TaskType} from '../models'
 import {taskProcessor} from './task-processor'
 import {progressReporter} from './progress-reporter'
 
 export class TasksFetcher {
   private readonly fetchInterval = 5000
-  private readonly httpClient = axios.create({baseURL: appConfig.TRACKER_API_URL})
+  private readonly httpClient = createHttpClient(appConfig.TRACKER_API_URL)
   private readonly username = appConfig.TG_USERNAME
   private workerId: string
 
@@ -52,10 +52,14 @@ export class TasksFetcher {
         },
       })
 
-      response.data.forEach(async (task) => {
-        const result = await taskProcessor.process(task)
-        this.taskDone(task.id, task.type, result)
-      })
+      for (const task of response.data) {
+        try {
+          const result = await taskProcessor.process(task)
+          await this.taskDone(task.id, task.type, result)
+        } catch (error) {
+          console.error(`Failed to process task ${task.id} (${task.type}):`, error?.message)
+        }
+      }
     } catch (error) {
       console.log("Can't fetch tasks", error?.message)
     }
@@ -63,11 +67,11 @@ export class TasksFetcher {
 
   private async taskDone(id: number, type: TaskType, payload: TaskCompletePayload) {
     console.log('Task complete:', JSON.stringify({id, type, payload}))
-    this.httpClient.post('/task-done', {
-      id,
-      type,
-      payload,
-    })
+    try {
+      await this.httpClient.post('/task-done', {id, type, payload})
+    } catch (error) {
+      console.error(`Failed to report task ${id} completion:`, error?.message)
+    }
   }
 }
 
