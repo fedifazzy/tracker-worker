@@ -70,6 +70,10 @@ export class TransmissionService {
     await transmissionRpc.request('torrent-remove', {ids: [hash], 'delete-local-data': true})
   }
 
+  async setBandwidthPriority(hash: string, priority: number): Promise<void> {
+    await transmissionRpc.request('torrent-set', {ids: [hash], bandwidthPriority: priority})
+  }
+
   private readonly maxAttempts = 30
   private readonly attemptStepMS = 3000
 

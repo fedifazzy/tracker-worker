@@ -16,6 +16,11 @@ export type DeleteFilesTaskPayload = {
   hash: string
 }
 
+export type SetPriorityTaskPayload = {
+  hash: string
+  priority: number
+}
+
 export type TorrentListItem = {
   name: string
   hash: string
@@ -32,6 +37,7 @@ export const enum TaskType {
   GET_STATUS,
   DELETE_FILES,
   LIST_TORRENTS,
+  SET_PRIORITY,
 }
 
 type TaskBase = {
@@ -58,13 +64,18 @@ type DeleteFilesTask = TaskBase & {
   payload: DeleteFilesTaskPayload
 }
 
+type SetPriorityTask = TaskBase & {
+  type: TaskType.SET_PRIORITY
+  payload: SetPriorityTaskPayload
+}
+
 type ListTorrentsTask = TaskBase & {
   type: TaskType.LIST_TORRENTS
 }
 
-export type TaskPayload = AddTorrentTaskPayload | SelectFileTaskPayload | DeleteFilesTaskPayload
+export type TaskPayload = AddTorrentTaskPayload | SelectFileTaskPayload | DeleteFilesTaskPayload | SetPriorityTaskPayload
 
-export type Task = AddTorrentTask | SelectFileTask | GetStatusTask | DeleteFilesTask | ListTorrentsTask
+export type Task = AddTorrentTask | SelectFileTask | GetStatusTask | DeleteFilesTask | SetPriorityTask | ListTorrentsTask
 
 export type AddTorrentResult = {
   hash: string
@@ -97,6 +108,12 @@ type DeleteFilesCompleteMessage = {
   payload: void
 }
 
+type SetPriorityCompleteMessage = {
+  id: number
+  type: TaskType.SET_PRIORITY
+  payload: void
+}
+
 type ListTorrentsCompleteMessage = {
   id: number
   type: TaskType.LIST_TORRENTS
@@ -116,6 +133,7 @@ export type TaskCompleteMessage =
   | SelectFileCompleteMessage
   | GetStatusCompleteMessage
   | DeleteFilesCompleteMessage
+  | SetPriorityCompleteMessage
   | ListTorrentsCompleteMessage
 
 export type TorrentProgress = {
