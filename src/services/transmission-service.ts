@@ -2,6 +2,7 @@ import {StatusInfo, TorrentListItem, TransmissionFileInfo} from '../models'
 import {transmissionRpc} from './transmission-rpc'
 
 const TRANSMISSION_STATUS_DOWNLOADING = 4
+const TRANSMISSION_STATUS_SEEDING = 6
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -137,13 +138,17 @@ export class TransmissionService {
     const torrents: any[] = res.arguments?.torrents ?? []
 
     return torrents
-      .filter((t) => t.status === TRANSMISSION_STATUS_DOWNLOADING)
+      .filter(
+        (t) =>
+          t.status === TRANSMISSION_STATUS_DOWNLOADING ||
+          (t.status === TRANSMISSION_STATUS_SEEDING && t.percentDone >= 0.99)
+      )
       .map((t) => ({
         hash: t.hashString,
         name: t.name,
-        percentDone: t.percentDone,
-        rateDownload: t.rateDownload,
-        eta: t.eta,
+        percentDone: Math.min(1, t.percentDone),
+        rateDownload: t.rateDownload ?? 0,
+        eta: t.status === TRANSMISSION_STATUS_SEEDING ? 0 : t.eta,
       }))
   }
 }
