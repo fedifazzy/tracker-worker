@@ -29,6 +29,7 @@ export type TorrentListItem = {
   progress: string | null
   downloadedSize: string | null
   estimatedTime: string | null
+  priority?: number
 }
 
 export const enum TaskType {
