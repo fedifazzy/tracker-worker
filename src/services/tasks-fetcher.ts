@@ -53,17 +53,16 @@ export class TasksFetcher {
         },
       })
 
-      await Promise.all(
-        response.data.map(async (task) => {
-          try {
-            const result = await taskProcessor.process(task)
-            await this.taskDone(task.id, task.type, result)
-          } catch (error) {
-            console.error(`Failed to process task ${task.id} (${task.type}):`, error?.message)
-          }
-        })
-      )
-    } catch (error) {
+      for (const task of response.data) {
+        let result: TaskCompletePayload = undefined
+        try {
+          result = await taskProcessor.process(task)
+        } catch (error: any) {
+          console.error(`Failed to process task ${task.id} (${task.type}):`, error?.message)
+        }
+        await this.taskDone(task.id, task.type, result)
+      }
+    } catch (error: any) {
       console.log("Can't fetch tasks", error?.message)
     }
   }
@@ -72,7 +71,7 @@ export class TasksFetcher {
     console.log('Task complete:', JSON.stringify({id, type, payload}))
     try {
       await this.httpClient.post('/task-done', {id, type, payload})
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Failed to report task ${id} completion:`, error?.message)
     }
   }

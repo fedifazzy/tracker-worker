@@ -5,12 +5,14 @@ type RpcResponse = {
   arguments?: Record<string, any>
 }
 
+const REQUEST_TIMEOUT_MS = 15000
+
 export class TransmissionRPC {
   private sessionId = ''
   private readonly client: AxiosInstance
 
   constructor(baseUrl: string) {
-    this.client = axios.create({baseURL: baseUrl})
+    this.client = axios.create({baseURL: baseUrl, timeout: REQUEST_TIMEOUT_MS})
   }
 
   async request(method: string, args: Record<string, any> = {}): Promise<RpcResponse> {

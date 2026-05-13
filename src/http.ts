@@ -2,13 +2,14 @@ import axios, {AxiosError, AxiosInstance} from 'axios'
 
 const MAX_RETRIES = 3
 const BASE_DELAY_MS = 1000
+const REQUEST_TIMEOUT_MS = 30000
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export function createHttpClient(baseURL: string): AxiosInstance {
-  const client = axios.create({baseURL})
+  const client = axios.create({baseURL, timeout: REQUEST_TIMEOUT_MS})
 
   client.interceptors.response.use(undefined, async (error: AxiosError) => {
     const config = error.config as any
