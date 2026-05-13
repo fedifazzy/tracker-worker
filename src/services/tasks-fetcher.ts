@@ -53,14 +53,16 @@ export class TasksFetcher {
         },
       })
 
-      for (const task of response.data) {
-        try {
-          const result = await taskProcessor.process(task)
-          await this.taskDone(task.id, task.type, result)
-        } catch (error) {
-          console.error(`Failed to process task ${task.id} (${task.type}):`, error?.message)
-        }
-      }
+      await Promise.all(
+        response.data.map(async (task) => {
+          try {
+            const result = await taskProcessor.process(task)
+            await this.taskDone(task.id, task.type, result)
+          } catch (error) {
+            console.error(`Failed to process task ${task.id} (${task.type}):`, error?.message)
+          }
+        })
+      )
     } catch (error) {
       console.log("Can't fetch tasks", error?.message)
     }
