@@ -70,10 +70,6 @@ export class TransmissionService {
     await transmissionRpc.request('torrent-remove', {ids: [hash], 'delete-local-data': true})
   }
 
-  async setBandwidthPriority(hash: string, priority: number): Promise<void> {
-    await transmissionRpc.request('torrent-set', {ids: [hash], bandwidthPriority: priority})
-  }
-
   private readonly maxAttempts = 30
   private readonly attemptStepMS = 3000
 
@@ -114,7 +110,7 @@ export class TransmissionService {
 
   async listAll(): Promise<TorrentListItem[]> {
     const res = await transmissionRpc.request('torrent-get', {
-      fields: ['name', 'hashString', 'totalSize', 'status', 'percentDone', 'eta', 'haveValid', 'bandwidthPriority'],
+      fields: ['name', 'hashString', 'totalSize', 'status', 'percentDone', 'eta', 'haveValid'],
     })
     const torrents: any[] = res.arguments?.torrents ?? []
 
@@ -126,7 +122,6 @@ export class TransmissionService {
       progress: `${Math.round(t.percentDone * 100)}%`,
       downloadedSize: formatBytes(t.haveValid),
       estimatedTime: t.eta >= 0 ? formatEta(t.eta) : null,
-      priority: t.bandwidthPriority ?? 0,
     }))
   }
 
