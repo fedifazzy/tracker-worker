@@ -3,7 +3,6 @@ import {
   AddTorrentResult,
   DeleteFilesTaskPayload,
   SelectFileTaskPayload,
-  SetPriorityTaskPayload,
   Task,
   TaskCompletePayload,
   TaskType,
@@ -25,8 +24,6 @@ export class TaskProcessor {
         return this.deleteFiles(task.payload)
       case TaskType.LIST_TORRENTS:
         return this.listTorrents()
-      case TaskType.SET_PRIORITY:
-        return this.setPriority(task.payload)
     }
   }
 
@@ -55,10 +52,6 @@ export class TaskProcessor {
 
   async listTorrents(): Promise<TorrentListItem[]> {
     return await transmission.listAll()
-  }
-
-  async setPriority({hash, priority}: SetPriorityTaskPayload): Promise<void> {
-    await transmission.setBandwidthPriority(hash, priority)
   }
 }
 
