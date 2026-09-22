@@ -24,6 +24,21 @@ media server.
 - You can set autoupload you downloads to S3 storage. Just set `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET` and `S3_REGION`
   variables in .env. Uploaded files will be deleted from local computer
 
+### Choosing a torrent client (optional)
+
+The image carries both Transmission and qBittorrent. Transmission is used unless you set
+`TORRENT_CLIENT=qbittorrent` in .env, and switching back is the same one line.
+
+qBittorrent is what makes it possible to watch a torrent before it has finished: Debian
+ships Transmission 3.00, which fetches pieces rarest-first, while qBittorrent downloads in
+order and grabs the first and last pieces early. Set `SEQUENTIAL_DOWNLOAD=false` if you
+would rather have the ordinary behaviour.
+
+With qBittorrent selected, its web interface is on port 8080. **Set `QBT_PASSWORD`** (and
+`QBT_USERNAME` if you want something other than `admin`) — the version in this image ships
+with a default password that everybody knows, and the port is published to your network.
+The worker applies the password itself on startup.
+
 ### Streaming to a player on your network (optional)
 
 Set `STREAM_PORT` in .env — say `8765` — and the worker serves the files of any torrent it

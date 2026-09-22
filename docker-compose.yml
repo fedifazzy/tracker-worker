@@ -5,6 +5,9 @@ services:
       - '9091:9091'
       # Only reachable when STREAM_PORT is set; the server stays off otherwise.
       - '${STREAM_PORT:-8765}:${STREAM_PORT:-8765}'
+      # qBittorrent's web interface, listening only when TORRENT_CLIENT selects
+      # it. Set QBT_PASSWORD: 4.5.2 defaults to a password everyone knows.
+      - '8080:8080'
     volumes:
       - type: bind
         source: ./downloads

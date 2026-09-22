@@ -68,14 +68,23 @@ export class QBittorrentService implements TorrentClient {
   async applySettings(): Promise<void> {
     const doneScript = path.resolve(__dirname, '../done.js')
 
+    const preferences: Record<string, unknown> = {
+      autorun_enabled: true,
+      autorun_program: `${doneScript} "%N" "%I"`,
+    }
+
+    // 4.5.2 ships with a password everybody knows, and it is stored hashed, so
+    // it cannot be put in the config file — the API takes it in the clear and
+    // hashes it. Requests from inside this container skip authentication
+    // regardless, so setting one costs nothing here.
+    if (appConfig.QBT_PASSWORD) {
+      preferences.web_ui_username = appConfig.QBT_USERNAME || 'admin'
+      preferences.web_ui_password = appConfig.QBT_PASSWORD
+    }
+
     for (let attempt = 1; attempt <= 30; attempt++) {
       try {
-        await qbittorrentApi.post('/app/setPreferences', {
-          json: JSON.stringify({
-            autorun_enabled: true,
-            autorun_program: `${doneScript} "%N" "%I"`,
-          }),
-        })
+        await qbittorrentApi.post('/app/setPreferences', {json: JSON.stringify(preferences)})
         return
       } catch (error: any) {
         if (attempt === 30) throw new Error(`qBittorrent never came up: ${error?.message}`)
