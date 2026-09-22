@@ -1,3 +1,4 @@
+import fs from 'fs'
 import path from 'path'
 import {FileLocation, PieceSource} from './piece-map'
 import {qbittorrentApi} from './qbittorrent-api'
@@ -38,7 +39,7 @@ export class QBittorrentPieces implements PieceSource {
       offset,
       length: file.size,
       pieceLength: properties.piece_size,
-      path: path.join(properties.save_path, file.name),
+      path: resolveOnDisk(properties.save_path, file.name),
     }
   }
 
@@ -62,6 +63,21 @@ export class QBittorrentPieces implements PieceSource {
     this.bitmaps.set(hash, {pieces, at: Date.now()})
     return pieces
   }
+}
+
+/**
+ * AppendExtension is on, so a file that is still downloading carries `.!qB`.
+ * That is deliberate: it hides unfinished files from anything that scans the
+ * directory and would otherwise serve their holes as zeros.
+ */
+function resolveOnDisk(saveDir: string, name: string): string {
+  const finished = path.join(saveDir, name)
+  if (fs.existsSync(finished)) return finished
+
+  const partial = finished + '.!qB'
+  if (fs.existsSync(partial)) return partial
+
+  return finished
 }
 
 export const qbittorrentPieces = new QBittorrentPieces()

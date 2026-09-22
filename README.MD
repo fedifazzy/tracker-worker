@@ -39,6 +39,21 @@ With qBittorrent selected, its web interface is on port 8080. **Set `QBT_PASSWOR
 with a default password that everybody knows, and the port is published to your network.
 The worker applies the password itself on startup.
 
+### Casting to a television (optional)
+
+With `STREAM_HOST`, `STREAM_PORT` and `DLNA_RENDERER_URL` set, the bot can tell the worker
+to start a torrent playing on a UPnP renderer on your network. The worker hands the
+television a URL on its own stream server and the television pulls the bytes itself.
+
+`STREAM_HOST` is the address your television should dial — your machine's address on the
+local network. It cannot be worked out automatically: inside a container the worker only
+sees its own address, which is not one anything else can reach.
+
+`DLNA_RENDERER_URL` is the renderer's device description, something like
+`http://192.168.0.23:16150/`. It is configured rather than discovered because discovery is
+multicast and would not leave a bridged container. If your television stops answering
+there after a reboot, it has probably picked a new port.
+
 ### Streaming to a player on your network (optional)
 
 Set `STREAM_PORT` in .env — say `8765` — and the worker serves the files of any torrent it

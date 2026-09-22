@@ -32,6 +32,12 @@ export type TorrentListItem = {
   priority?: number
 }
 
+export type TorrentFile = {
+  index: number
+  name: string
+  size: number
+}
+
 export type DownloadingTorrent = {
   hash: string
   name: string
@@ -53,6 +59,8 @@ export interface TorrentClient {
   removeAndDelete(hash: string): Promise<void>
   setBandwidthPriority(hash: string, priority: number): Promise<void>
   filesList(hash: string): Promise<TransmissionFileInfo[]>
+  /** In torrent order, which is the order the piece space is laid out in. */
+  files(hash: string): Promise<TorrentFile[]>
   getStatus(): Promise<StatusInfo[]>
   listAll(): Promise<TorrentListItem[]>
   getDownloadingTorrents(): Promise<DownloadingTorrent[]>
@@ -65,6 +73,7 @@ export const enum TaskType {
   DELETE_FILES,
   LIST_TORRENTS,
   SET_PRIORITY,
+  CAST,
 }
 
 type TaskBase = {
@@ -100,18 +109,40 @@ type ListTorrentsTask = TaskBase & {
   type: TaskType.LIST_TORRENTS
 }
 
+export type CastTaskPayload = {
+  hash: string
+  /** Omitted means "pick the obvious one", which is the largest video file. */
+  fileIndex?: number
+}
+
+export type CastResult = {
+  title: string
+  url: string
+}
+
+type CastTask = TaskBase & {
+  type: TaskType.CAST
+  payload: CastTaskPayload
+}
+
 export type TaskPayload =
   AddTorrentTaskPayload | SelectFileTaskPayload | DeleteFilesTaskPayload | SetPriorityTaskPayload
 
 export type Task =
-  AddTorrentTask | SelectFileTask | GetStatusTask | DeleteFilesTask | SetPriorityTask | ListTorrentsTask
+  | AddTorrentTask
+  | SelectFileTask
+  | GetStatusTask
+  | DeleteFilesTask
+  | SetPriorityTask
+  | ListTorrentsTask
+  | CastTask
 
 export type AddTorrentResult = {
   hash: string
   filesList: TransmissionFileInfo[]
 }
 
-export type TaskCompletePayload = AddTorrentResult | StatusInfo[] | TorrentListItem[] | void
+export type TaskCompletePayload = AddTorrentResult | CastResult | StatusInfo[] | TorrentListItem[] | void
 
 type AddTorrentCompleteMessage = {
   id: number

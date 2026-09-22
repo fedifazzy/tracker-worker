@@ -1,6 +1,8 @@
 import {
   AddTorrentTaskPayload,
   AddTorrentResult,
+  CastResult,
+  CastTaskPayload,
   DeleteFilesTaskPayload,
   SelectFileTaskPayload,
   SetPriorityTaskPayload,
@@ -9,6 +11,7 @@ import {
   TaskType,
   TorrentListItem,
 } from '../models'
+import {castService} from './cast'
 import {torrentClient} from './torrent-client'
 
 export class TaskProcessor {
@@ -27,6 +30,8 @@ export class TaskProcessor {
         return this.listTorrents()
       case TaskType.SET_PRIORITY:
         return this.setPriority(task.payload)
+      case TaskType.CAST:
+        return this.cast(task.payload)
     }
   }
 
@@ -59,6 +64,10 @@ export class TaskProcessor {
 
   async setPriority({hash, priority}: SetPriorityTaskPayload): Promise<void> {
     await torrentClient.setBandwidthPriority(hash, priority)
+  }
+
+  async cast(payload: CastTaskPayload): Promise<CastResult> {
+    return await castService.cast(payload)
   }
 }
 

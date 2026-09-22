@@ -20,6 +20,8 @@ class AppConfig {
     'QBT_USERNAME',
     'QBT_PASSWORD',
     'SEQUENTIAL_DOWNLOAD',
+    'STREAM_HOST',
+    'DLNA_RENDERER_URL',
   ] as const
 
   private readonly requiredFields: Partial<typeof AppConfig.fields> = ['TRACKER_API_URL', 'TG_USERNAME']

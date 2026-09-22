@@ -1,4 +1,11 @@
-import {DownloadingTorrent, StatusInfo, TorrentClient, TorrentListItem, TransmissionFileInfo} from '../models'
+import {
+  DownloadingTorrent,
+  StatusInfo,
+  TorrentClient,
+  TorrentFile,
+  TorrentListItem,
+  TransmissionFileInfo,
+} from '../models'
 import {transmissionRpc} from './transmission-rpc'
 
 const TRANSMISSION_STATUS_DOWNLOADING = 4
@@ -95,6 +102,12 @@ export class TransmissionService implements TorrentClient {
       }))
     }
     return []
+  }
+
+  async files(hash: string): Promise<TorrentFile[]> {
+    const res = await transmissionRpc.request('torrent-get', {ids: [hash], fields: ['files']})
+    const files: Array<{name: string; length: number}> = res.arguments?.torrents?.[0]?.files ?? []
+    return files.map((file, index) => ({index, name: file.name, size: file.length}))
   }
 
   async getStatus(): Promise<StatusInfo[]> {

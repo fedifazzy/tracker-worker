@@ -215,8 +215,8 @@ export function parseRange(header: string | undefined, size: number): Range | nu
   return {start, end}
 }
 
-function contentTypeFor(filePath: string): string {
-  const name = filePath.replace(/\.part$/, '')
+export function contentTypeFor(filePath: string): string {
+  const name = filePath.replace(/\.(part|!qB)$/, '')
   return CONTENT_TYPES[path.extname(name).toLowerCase()] || 'application/octet-stream'
 }
 

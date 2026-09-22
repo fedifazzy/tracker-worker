@@ -1,5 +1,12 @@
 import path from 'path'
-import {DownloadingTorrent, StatusInfo, TorrentClient, TorrentListItem, TransmissionFileInfo} from '../models'
+import {
+  DownloadingTorrent,
+  StatusInfo,
+  TorrentClient,
+  TorrentFile,
+  TorrentListItem,
+  TransmissionFileInfo,
+} from '../models'
 import {appConfig} from '../config'
 import {infoHashFromMagnet, qbittorrentApi} from './qbittorrent-api'
 
@@ -155,10 +162,12 @@ export class QBittorrentService implements TorrentClient {
   }
 
   /** Torrent order, which is the order the piece space is laid out in. */
-  async files(hash: string): Promise<QbFile[]> {
+  async files(hash: string): Promise<TorrentFile[]> {
     const files = await qbittorrentApi.get<QbFile[]>('/torrents/files', {hash})
     if (!Array.isArray(files)) return []
-    return files.map((file, position) => ({...file, index: file.index ?? position})).sort((a, b) => a.index - b.index)
+    return files
+      .map((file, position) => ({index: file.index ?? position, name: file.name, size: file.size}))
+      .sort((a, b) => a.index - b.index)
   }
 
   async getStatus(): Promise<StatusInfo[]> {
