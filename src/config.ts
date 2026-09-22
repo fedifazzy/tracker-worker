@@ -15,6 +15,7 @@ class AppConfig {
     'S3_SECRET',
     'S3_REGION',
     'WORKER_ID',
+    'STREAM_PORT',
   ] as const
 
   private readonly requiredFields: Partial<typeof AppConfig.fields> = ['TRACKER_API_URL', 'TG_USERNAME']

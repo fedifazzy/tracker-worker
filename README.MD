@@ -24,6 +24,25 @@ media server.
 - You can set autoupload you downloads to S3 storage. Just set `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET` and `S3_REGION`
   variables in .env. Uploaded files will be deleted from local computer
 
+### Streaming to a player on your network (optional)
+
+Set `STREAM_PORT` in .env — say `8765` — and the worker serves the files of any torrent it
+holds over plain HTTP, at `http://<worker>:8765/t/<torrent-hash>/<file-index>`. Open that
+in VLC, Kodi or any DLNA renderer on the same network.
+
+A torrent that is still downloading works too: the final size comes from the torrent's
+metadata, so a player treats it as an ordinary file it can seek around in, and a read that
+reaches bytes which have not arrived yet waits for them instead of being served as zeros.
+Reading straight off disk cannot do this — the file is preallocated, so the gaps read back
+as silent zeros rather than as end-of-file.
+
+Two things worth knowing before turning it on:
+
+- **There is no authentication.** Keep the port on your LAN.
+- Playback from an unfinished torrent only really works with the pieces arriving in order.
+  Transmission gained sequential download in 4.1; on an older build, expect to stream only
+  what has already finished.
+
 ### (not so) important notice
 
 - I wouldn't mind being invited for a beer

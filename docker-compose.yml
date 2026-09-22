@@ -3,6 +3,8 @@ services:
     image: ghcr.io/fedifazzy/tracker-worker:latest
     ports:
       - '9091:9091'
+      # Only reachable when STREAM_PORT is set; the server stays off otherwise.
+      - '${STREAM_PORT:-8765}:${STREAM_PORT:-8765}'
     volumes:
       - type: bind
         source: ./downloads
