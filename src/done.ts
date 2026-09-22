@@ -4,8 +4,10 @@ import {appConfig} from './config'
 import axios from 'axios'
 
 const main = async () => {
-  const torrentName = process.env.TR_TORRENT_NAME
-  const hash = process.env.TR_TORRENT_HASH
+  // Transmission sets these in the environment; qBittorrent has no equivalent
+  // and passes "%N" "%I" as arguments instead.
+  const torrentName = process.env.TR_TORRENT_NAME || process.argv[2]
+  const hash = process.env.TR_TORRENT_HASH || process.argv[3]
 
   if (!hasFiles(torrentName)) return
 

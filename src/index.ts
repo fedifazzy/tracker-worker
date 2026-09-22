@@ -10,7 +10,9 @@ process.on('unhandledRejection', (rejection: any) => {
 import {appConfig} from './config'
 import {tasksFetcher} from './services/tasks-fetcher'
 import {streamServer} from './services/stream-server'
+import {initTorrentClient} from './services/torrent-client'
 
+initTorrentClient().catch((error) => console.error(error?.message || error))
 tasksFetcher.start()
 
 // Off unless a port is configured: the stream server has no authentication and

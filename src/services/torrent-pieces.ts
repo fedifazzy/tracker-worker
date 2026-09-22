@@ -90,4 +90,4 @@ function resolveOnDisk(downloadDir: string, name: string): string {
   return finished
 }
 
-export const torrentPieces = new TorrentPieces()
+export const transmissionPieces = new TorrentPieces()

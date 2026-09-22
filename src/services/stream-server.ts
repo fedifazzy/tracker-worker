@@ -2,7 +2,7 @@ import fs from 'fs'
 import http from 'http'
 import path from 'path'
 import {FileLocation, PieceSource, availableFrom} from './piece-map'
-import {torrentPieces} from './torrent-pieces'
+import {pieceSource} from './torrent-client'
 
 const CHUNK_BYTES = 256 * 1024
 const POLL_INTERVAL_MS = 500
@@ -236,4 +236,4 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export const streamServer = new StreamServer(torrentPieces)
+export const streamServer = new StreamServer(pieceSource)

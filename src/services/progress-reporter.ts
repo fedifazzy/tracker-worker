@@ -1,6 +1,6 @@
 import {appConfig} from '../config'
 import {createHttpClient} from '../http'
-import {transmission} from './transmission-service'
+import {torrentClient} from './torrent-client'
 
 export class ProgressReporter {
   private readonly reportInterval = 15000
@@ -22,7 +22,7 @@ export class ProgressReporter {
 
   private async report(workerId: string) {
     try {
-      const torrents = await transmission.getDownloadingTorrents()
+      const torrents = await torrentClient.getDownloadingTorrents()
       if (torrents.length === 0) return
 
       await this.httpClient.post('/progress', {workerId, torrents})

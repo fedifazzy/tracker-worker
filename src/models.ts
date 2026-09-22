@@ -32,6 +32,32 @@ export type TorrentListItem = {
   priority?: number
 }
 
+export type DownloadingTorrent = {
+  hash: string
+  name: string
+  percentDone: number
+  rateDownload: number
+  eta: number
+}
+
+/**
+ * What the rest of the worker needs from a torrent engine. Transmission and
+ * qBittorrent both implement it, and TORRENT_CLIENT picks between them — the
+ * point being that switching engines is reversible with one variable.
+ */
+export interface TorrentClient {
+  start(magnetLink: string): Promise<string>
+  resume(hash: string): Promise<void>
+  stop(hash: string): Promise<void>
+  selectFile(hash: string, fileId: number | string): Promise<void>
+  removeAndDelete(hash: string): Promise<void>
+  setBandwidthPriority(hash: string, priority: number): Promise<void>
+  filesList(hash: string): Promise<TransmissionFileInfo[]>
+  getStatus(): Promise<StatusInfo[]>
+  listAll(): Promise<TorrentListItem[]>
+  getDownloadingTorrents(): Promise<DownloadingTorrent[]>
+}
+
 export const enum TaskType {
   ADD_TORRENT,
   SELECT_FILE,
@@ -74,9 +100,11 @@ type ListTorrentsTask = TaskBase & {
   type: TaskType.LIST_TORRENTS
 }
 
-export type TaskPayload = AddTorrentTaskPayload | SelectFileTaskPayload | DeleteFilesTaskPayload | SetPriorityTaskPayload
+export type TaskPayload =
+  AddTorrentTaskPayload | SelectFileTaskPayload | DeleteFilesTaskPayload | SetPriorityTaskPayload
 
-export type Task = AddTorrentTask | SelectFileTask | GetStatusTask | DeleteFilesTask | SetPriorityTask | ListTorrentsTask
+export type Task =
+  AddTorrentTask | SelectFileTask | GetStatusTask | DeleteFilesTask | SetPriorityTask | ListTorrentsTask
 
 export type AddTorrentResult = {
   hash: string

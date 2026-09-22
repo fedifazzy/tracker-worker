@@ -1,4 +1,4 @@
-import {StatusInfo, TorrentListItem, TransmissionFileInfo} from '../models'
+import {DownloadingTorrent, StatusInfo, TorrentClient, TorrentListItem, TransmissionFileInfo} from '../models'
 import {transmissionRpc} from './transmission-rpc'
 
 const TRANSMISSION_STATUS_DOWNLOADING = 4
@@ -22,24 +22,26 @@ function formatEta(seconds: number): string {
 
 function statusNumberToString(status: number): string {
   switch (status) {
-    case 0: return 'Stopped'
-    case 1: return 'Queued to verify'
-    case 2: return 'Verifying'
-    case 3: return 'Queued to download'
-    case 4: return 'Downloading'
-    case 5: return 'Queued to seed'
-    case 6: return 'Seeding'
-    default: return 'Unknown'
+    case 0:
+      return 'Stopped'
+    case 1:
+      return 'Queued to verify'
+    case 2:
+      return 'Verifying'
+    case 3:
+      return 'Queued to download'
+    case 4:
+      return 'Downloading'
+    case 5:
+      return 'Queued to seed'
+    case 6:
+      return 'Seeding'
+    default:
+      return 'Unknown'
   }
 }
 
-export class TransmissionService {
-  private readonly uiUrl = 'http://localhost:9091/torrent'
-
-  constructor() {
-    console.log(`Transmission UI: ${this.uiUrl}/web/`)
-  }
-
+export class TransmissionService implements TorrentClient {
   async start(magnetLink: string): Promise<string> {
     const res = await transmissionRpc.request('torrent-add', {filename: magnetLink})
     const added = res.arguments?.['torrent-added'] ?? res.arguments?.['torrent-duplicate']
@@ -130,13 +132,7 @@ export class TransmissionService {
     }))
   }
 
-  async getDownloadingTorrents(): Promise<Array<{
-    hash: string
-    name: string
-    percentDone: number
-    rateDownload: number
-    eta: number
-  }>> {
+  async getDownloadingTorrents(): Promise<DownloadingTorrent[]> {
     const res = await transmissionRpc.request('torrent-get', {
       fields: ['name', 'hashString', 'percentDone', 'rateDownload', 'eta', 'status'],
     })

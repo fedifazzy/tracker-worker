@@ -9,7 +9,7 @@ import {
   TaskType,
   TorrentListItem,
 } from '../models'
-import {transmission} from './transmission-service'
+import {torrentClient} from './torrent-client'
 
 export class TaskProcessor {
   async process(task: Task): Promise<TaskCompletePayload> {
@@ -31,8 +31,8 @@ export class TaskProcessor {
   }
 
   async addTorrent({magnetLink}: AddTorrentTaskPayload): Promise<AddTorrentResult> {
-    const hash = await transmission.start(magnetLink)
-    const filesList = await transmission.filesList(hash)
+    const hash = await torrentClient.start(magnetLink)
+    const filesList = await torrentClient.filesList(hash)
 
     return {
       hash,
@@ -41,24 +41,24 @@ export class TaskProcessor {
   }
 
   async selectFiles({hash, fileId}: SelectFileTaskPayload) {
-    await transmission.selectFile(hash, fileId)
-    await transmission.resume(hash)
+    await torrentClient.selectFile(hash, fileId)
+    await torrentClient.resume(hash)
   }
 
   async getStatus() {
-    return await transmission.getStatus()
+    return await torrentClient.getStatus()
   }
 
   async deleteFiles({hash}: DeleteFilesTaskPayload) {
-    await transmission.removeAndDelete(hash)
+    await torrentClient.removeAndDelete(hash)
   }
 
   async listTorrents(): Promise<TorrentListItem[]> {
-    return await transmission.listAll()
+    return await torrentClient.listAll()
   }
 
   async setPriority({hash, priority}: SetPriorityTaskPayload): Promise<void> {
-    await transmission.setBandwidthPriority(hash, priority)
+    await torrentClient.setBandwidthPriority(hash, priority)
   }
 }
 

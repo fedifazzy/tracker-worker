@@ -16,6 +16,10 @@ class AppConfig {
     'S3_REGION',
     'WORKER_ID',
     'STREAM_PORT',
+    'TORRENT_CLIENT',
+    'QBT_USERNAME',
+    'QBT_PASSWORD',
+    'SEQUENTIAL_DOWNLOAD',
   ] as const
 
   private readonly requiredFields: Partial<typeof AppConfig.fields> = ['TRACKER_API_URL', 'TG_USERNAME']

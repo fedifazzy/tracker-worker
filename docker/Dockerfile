@@ -19,6 +19,7 @@ RUN apt-get update && \
         transmission-cli \
         transmission-common \
         transmission-daemon \
+        qbittorrent-nox \
         samba && \
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
@@ -26,6 +27,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/*
 
 COPY docker/settings.json /etc/transmission-daemon/settings.json
+COPY docker/qBittorrent.conf /etc/qBittorrent.conf
 COPY docker/entrypoint.sh /app/entrypoint.sh
 
 WORKDIR /app/express
