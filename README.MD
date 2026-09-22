@@ -54,6 +54,10 @@ sees its own address, which is not one anything else can reach.
 multicast and would not leave a bridged container. If your television stops answering
 there after a reboot, it has probably picked a new port.
 
+If you build your own image, keep `LANG` set to a UTF-8 locale. qBittorrent is a Qt
+application and runs file paths through the locale's codec, so without one it writes
+non-ASCII names as punctuation and then cannot find the files it just wrote.
+
 ### Streaming to a player on your network (optional)
 
 Set `STREAM_PORT` in .env — say `8765` — and the worker serves the files of any torrent it

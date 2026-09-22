@@ -12,6 +12,14 @@ ARG BUILD_CHANGELOG
 ENV BUILD_SHA=$BUILD_SHA
 ENV BUILD_CHANGELOG=$BUILD_CHANGELOG
 
+# qBittorrent is a Qt application and converts file paths through the locale's
+# codec. The slim image sets no locale at all, so LC_CTYPE is POSIX, and any
+# name outside ASCII is mangled on the way to disk — and then not found again,
+# because the lookup is mangled the same way. Transmission never cared: it is
+# plain C and writes the bytes it was given. C.utf8 is built into this image's
+# glibc, so nothing has to be installed.
+ENV LANG=C.UTF-8
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
